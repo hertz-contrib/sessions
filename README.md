@@ -6,7 +6,7 @@ This is a middleware for hertz.
 Hertz middleware for session management with multi-backend support:
 
 
-- [cookie-based](#cookie-based)
+- [Cookie-based](#cookie-based)
 - [Redis](#redis)
 
 ## Usage
@@ -26,7 +26,7 @@ import "github.com/hertz-contrib/sessions"
 
 ## Basic Examples
 
-### single session
+### Single session
 ```go
 package main
 
@@ -58,7 +58,7 @@ func main() {
 }
 ```
 
-### multiple sessions
+### Multiple sessions
 ```go
 package main
 
@@ -101,7 +101,7 @@ func main() {
 ```
 ## Backend Examples
 
-### cookie-based
+### Cookie-based
 
 ```go
 package main
