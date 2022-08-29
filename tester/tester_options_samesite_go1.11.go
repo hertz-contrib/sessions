@@ -29,7 +29,7 @@
 package tester
 
 import (
-	ccontext "context"
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -43,7 +43,7 @@ import (
 )
 
 func testOptionSameSitego(t *testing.T, r *route.Engine) {
-	r.GET("/sameSite", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/sameSite", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Set("key", ok)
 		session.Options(sessions.Options{

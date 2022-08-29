@@ -43,7 +43,7 @@ import (
 func main() {
 	h := server.New(server.WithHostPorts(":8000"))
 	store := cookie.NewStore([]byte("secret"))
-	h.Use(sessions.SessionsMany("mysession", store))
+	h.Use(sessions.Sessions("mysession", store))
 	h.GET("/hello", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		
@@ -76,7 +76,7 @@ func main() {
 	h := server.New(server.WithHostPorts(":8000"))
 	store := cookie.NewStore([]byte("secret"))
 	sessionNames := []string{"a", "b"}
-	h.Use(sessions.Sessions(sessionNames, store))
+	h.Use(sessions.SessionsMany(sessionNames, store))
 	h.GET("/hello", func(ctx context.Context, c *app.RequestContext) {
 		sessionA := sessions.DefaultMany(c, "a")
 		sessionB := sessions.DefaultMany(c, "b")
