@@ -43,9 +43,7 @@ func main() {
 		session := sessions.Default(c)
 		var count int
 		v := session.Get("count")
-		if v == nil {
-			count = 0
-		} else {
+		if v != nil {
 			count = v.(int)
 			count++
 		}

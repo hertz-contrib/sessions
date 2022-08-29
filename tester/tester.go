@@ -26,7 +26,7 @@
 package tester
 
 import (
-	ccontext "context"
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -50,14 +50,14 @@ func GetSet(t *testing.T, newStore storeFactory) {
 	opt := config.NewOptions([]config.Option{})
 	r := route.NewEngine(opt)
 	r.Use(sessions.Sessions(sessionName, newStore(t)))
-	r.GET("/set", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Set("key", ok)
 		_ = session.Save()
 		c.String(consts.StatusOK, ok)
 	})
 
-	r.GET("/get", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/get", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		if session.Get("key") != ok {
 			t.Error("Session writing failed")
@@ -79,19 +79,19 @@ func DeleteKey(t *testing.T, newStore storeFactory) {
 	opt := config.NewOptions([]config.Option{})
 	r := route.NewEngine(opt)
 	r.Use(sessions.Sessions(sessionName, newStore(t)))
-	r.GET("/set", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Set("key", ok)
 		_ = session.Save()
 		c.String(consts.StatusOK, ok)
 	})
-	r.GET("/delete", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/delete", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Delete("key")
 		_ = session.Save()
 		c.String(http.StatusOK, ok)
 	})
-	r.GET("/get", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/get", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		if session.Get("key") != nil {
 			t.Error("Session deleting failed")
@@ -118,14 +118,14 @@ func Flashes(t *testing.T, newStore storeFactory) {
 	r := route.NewEngine(opt)
 	r.Use(sessions.Sessions(sessionName, newStore(t)))
 
-	r.GET("/set", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.AddFlash(ok)
 		_ = session.Save()
 		c.String(http.StatusOK, ok)
 	})
 
-	r.GET("/flash", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/flash", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		l := len(session.Flashes())
 		if l != 1 {
@@ -135,7 +135,7 @@ func Flashes(t *testing.T, newStore storeFactory) {
 		c.String(http.StatusOK, ok)
 	})
 
-	r.GET("/check", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/check", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		l := len(session.Flashes())
 		if l != 0 {
@@ -169,7 +169,7 @@ func Clear(t *testing.T, newStore storeFactory) {
 	r := route.NewEngine(opt)
 	r.Use(sessions.Sessions(sessionName, newStore(t)))
 
-	r.GET("/set", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		for k, v := range data {
 			session.Set(k, v)
@@ -179,7 +179,7 @@ func Clear(t *testing.T, newStore storeFactory) {
 		c.String(http.StatusOK, ok)
 	})
 
-	r.GET("/check", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/check", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		for k, v := range data {
 			if session.Get(k) == v {
@@ -206,7 +206,7 @@ func Options(t *testing.T, newStore storeFactory) {
 		Domain: "localhost",
 	})
 	r.Use(sessions.Sessions(sessionName, store))
-	r.GET("/domain", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/domain", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Set("key", ok)
 		session.Options(sessions.Options{
@@ -215,19 +215,19 @@ func Options(t *testing.T, newStore storeFactory) {
 		_ = session.Save()
 		c.String(http.StatusOK, ok)
 	})
-	r.GET("/path", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/path", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Set("key", ok)
 		_ = session.Save()
 		c.String(http.StatusOK, ok)
 	})
-	r.GET("/set", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Set("key", ok)
 		_ = session.Save()
 		c.String(http.StatusOK, ok)
 	})
-	r.GET("/expire", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/expire", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Options(sessions.Options{
 			MaxAge: -1,
@@ -235,7 +235,7 @@ func Options(t *testing.T, newStore storeFactory) {
 		_ = session.Save()
 		c.String(http.StatusOK, ok)
 	})
-	r.GET("/check", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/check", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		val := session.Get("key")
 		if val != nil {
@@ -272,7 +272,7 @@ func Many(t *testing.T, newStore storeFactory) {
 	r := route.NewEngine(opt)
 	sessionNames := []string{"a", "b"}
 	r.Use(sessions.SessionsMany(sessionNames, newStore(t)))
-	r.GET("/set", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		sessionA := sessions.DefaultMany(c, "a")
 		sessionA.Set("hello", "world")
 		_ = sessionA.Save()
@@ -283,7 +283,7 @@ func Many(t *testing.T, newStore storeFactory) {
 		c.String(http.StatusOK, ok)
 	})
 
-	r.GET("/get", func(ctx ccontext.Context, c *app.RequestContext) {
+	r.GET("/get", func(ctx context.Context, c *app.RequestContext) {
 		sessionA := sessions.DefaultMany(c, "a")
 		if sessionA.Get("hello") != "world" {
 			t.Error("Session writing failed")
