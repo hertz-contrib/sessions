@@ -87,7 +87,7 @@ func SetKeyPrefix(s Store, prefix string) error {
 	return nil
 }
 
-// GetRedisStore get the actual woking store.
+// GetRedisStore get the actual working store.
 // Ref: https://godoc.org/github.com/boj/redistore#RediStore
 func GetRedisStore(s Store) (rediStore *redistore.RediStore, err error) {
 	realStore, ok := s.(*store)

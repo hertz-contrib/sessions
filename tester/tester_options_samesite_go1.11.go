@@ -62,6 +62,6 @@ func testOptionSameSitego(t *testing.T, r *route.Engine) {
 
 	s := strings.Split(resp3.Header().Get("Set-Cookie"), ";")
 	if s[1] != " SameSite=Strict" {
-		t.Error("Error writing samesite with options:", s[1])
+		t.Error("Error writing same site with options:", s[1])
 	}
 }
