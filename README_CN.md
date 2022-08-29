@@ -3,7 +3,7 @@
 
 这是 Hertz 的一个中间件。
 
-Hertz 中间件用于 session 管理，支持 muit-backend。
+是一个用于管理 session 的 Hertz 中间件，支持 multi-backend。 
 
 - [cookie-based](#cookie-based)
 - [Redis](#redis)
