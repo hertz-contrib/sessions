@@ -4,8 +4,16 @@ on: [push, pull_request]
 
 jobs:
   lint-and-ut:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+      GOPROXY: https://proxy.golang.org
     steps:
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.4.0
+        with:
+          redis-version: 4
+
       - uses: actions/checkout@v3
 
       - name: Set up Go
