@@ -3,13 +3,13 @@ English | [中文](README_CN.md)
 
 This is a middleware for hertz.
 
-Hertz middleware for session management with muit-backend support:
+Hertz middleware for session management with multi-backend support:
+
 
 - [cookie-based](#cookie-based)
 - [Redis](#redis)
 
 ## Usage
-
 ### Start using it
 
 Download and install it:
