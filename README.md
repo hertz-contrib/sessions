@@ -3,11 +3,14 @@ English | [中文](README_CN.md)
 
 This is a middleware for hertz.
 
+
 Hertz middleware for session management with multi-backend support:
 
 
 - [Cookie-based](#cookie-based)
 - [Redis](#redis)
+
+This repo is forked from [sessions](https://github.com/hertz-contrib/sessions) and adapted for hertz.
 
 ## Usage
 ### Start using it
