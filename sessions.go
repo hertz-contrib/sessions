@@ -37,7 +37,7 @@ import (
 )
 
 const (
-	DefaultKey  = "github.com/cloudwego/hertz"
+	DefaultKey  = "github.com/hertz-contrib/sessions"
 	errorFormat = "[sessions] ERROR! %s\n"
 )
 
