@@ -31,9 +31,9 @@ package tester
 import (
 	"testing"
 
-	"github.com/gin-gonic/gin"
+	"github.com/cloudwego/hertz/pkg/route"
 )
 
-func testOptionSameSitego(t *testing.T, r *gin.Engine) {
+func testOptionSameSitego(t *testing.T, r *route.Engine) {
 	// not supported
 }
