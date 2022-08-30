@@ -8,7 +8,7 @@
 - [cookie-based](#cookie-based)
 - [Redis](#redis)
 
-这个仓库是从 [sessions](https://github.com/hertz-contrib/sessions) fork 而来的，并为 hertz 进行了适配。
+这个仓库是从 [sessions](https://github.com/gin-contrib/sessions) fork 而来的，并为 hertz 进行了适配。
 
 ## 使用方法
 
