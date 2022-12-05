@@ -38,7 +38,7 @@ import (
 func main() {
 	h := server.Default(server.WithHostPorts(":8000"))
 	store, _ := redis.NewStore(10, "tcp", "localhost:6379", "", []byte("secret"))
-	h.Use(sessions.Sessions("mysession", store))
+	h.Use(sessions.New("mysession", store))
 
 	h.GET("/incr", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)

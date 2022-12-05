@@ -73,7 +73,17 @@ type Session interface {
 	Save() error
 }
 
+// Deprecated: use New instead of Sessions
 func Sessions(name string, store Store) app.HandlerFunc {
+	return New(name, store)
+}
+
+// Deprecated: use Many instead of SessionsMany
+func SessionsMany(names []string, store Store) app.HandlerFunc {
+	return Many(names, store)
+}
+
+func New(name string, store Store) app.HandlerFunc {
 	return func(ctx gcontext.Context, c *app.RequestContext) {
 		req, _ := adaptor.GetCompatRequest(&c.Request)
 		resp := adaptor.GetCompatResponseWriter(&c.Response)
@@ -85,7 +95,7 @@ func Sessions(name string, store Store) app.HandlerFunc {
 	}
 }
 
-func SessionsMany(names []string, store Store) app.HandlerFunc {
+func Many(names []string, store Store) app.HandlerFunc {
 	return func(ctx gcontext.Context, c *app.RequestContext) {
 		s := make(map[string]Session, len(names))
 		req, _ := adaptor.GetCompatRequest(&c.Request)

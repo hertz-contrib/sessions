@@ -38,7 +38,7 @@ import (
 func main() {
 	h := server.New(server.WithHostPorts(":8000"))
 	store := cookie.NewStore([]byte("secret"))
-	h.Use(sessions.Sessions("mysession", store))
+	h.Use(sessions.New("mysession", store))
 	h.GET("/incr", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		var count int

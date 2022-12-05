@@ -45,7 +45,7 @@ import (
 func main() {
 	h := server.New(server.WithHostPorts(":8000"))
 	store := cookie.NewStore([]byte("secret"))
-	h.Use(sessions.Sessions("mysession", store))
+	h.Use(sessions.New("mysession", store))
 	h.GET("/hello", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		
@@ -78,7 +78,7 @@ func main() {
 	h := server.New(server.WithHostPorts(":8000"))
 	store := cookie.NewStore([]byte("secret"))
 	sessionNames := []string{"a", "b"}
-	h.Use(sessions.SessionsMany(sessionNames, store))
+	h.Use(sessions.Many(sessionNames, store))
 	h.GET("/hello", func(ctx context.Context, c *app.RequestContext) {
 		sessionA := sessions.DefaultMany(c, "a")
 		sessionB := sessions.DefaultMany(c, "b")
@@ -121,7 +121,7 @@ import (
 func main() {
 	h := server.New(server.WithHostPorts(":8000"))
 	store := cookie.NewStore([]byte("secret"))
-	h.Use(sessions.Sessions("mysession", store))
+	h.Use(sessions.New("mysession", store))
 	h.GET("/incr", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		var count int
@@ -158,7 +158,7 @@ import (
 func main() {
 	h := server.Default(server.WithHostPorts(":8000"))
 	store, _ := redis.NewStore(10, "tcp", "localhost:6379", "", []byte("secret"))
-	h.Use(sessions.Sessions("mysession", store))
+	h.Use(sessions.New("mysession", store))
 	
 	h.GET("/incr", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)

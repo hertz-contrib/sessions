@@ -49,7 +49,7 @@ const ok = "ok"
 func GetSet(t *testing.T, newStore storeFactory) {
 	opt := config.NewOptions([]config.Option{})
 	r := route.NewEngine(opt)
-	r.Use(sessions.Sessions(sessionName, newStore(t)))
+	r.Use(sessions.New(sessionName, newStore(t)))
 	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Set("key", ok)
@@ -78,7 +78,7 @@ func GetSet(t *testing.T, newStore storeFactory) {
 func DeleteKey(t *testing.T, newStore storeFactory) {
 	opt := config.NewOptions([]config.Option{})
 	r := route.NewEngine(opt)
-	r.Use(sessions.Sessions(sessionName, newStore(t)))
+	r.Use(sessions.New(sessionName, newStore(t)))
 	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Set("key", ok)
@@ -116,7 +116,7 @@ func DeleteKey(t *testing.T, newStore storeFactory) {
 func Flashes(t *testing.T, newStore storeFactory) {
 	opt := config.NewOptions([]config.Option{})
 	r := route.NewEngine(opt)
-	r.Use(sessions.Sessions(sessionName, newStore(t)))
+	r.Use(sessions.New(sessionName, newStore(t)))
 
 	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
@@ -167,7 +167,7 @@ func Clear(t *testing.T, newStore storeFactory) {
 	}
 	opt := config.NewOptions([]config.Option{})
 	r := route.NewEngine(opt)
-	r.Use(sessions.Sessions(sessionName, newStore(t)))
+	r.Use(sessions.New(sessionName, newStore(t)))
 
 	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
@@ -205,7 +205,7 @@ func Options(t *testing.T, newStore storeFactory) {
 	store.Options(sessions.Options{
 		Domain: "localhost",
 	})
-	r.Use(sessions.Sessions(sessionName, store))
+	r.Use(sessions.New(sessionName, store))
 	r.GET("/domain", func(ctx context.Context, c *app.RequestContext) {
 		session := sessions.Default(c)
 		session.Set("key", ok)
@@ -271,7 +271,7 @@ func Many(t *testing.T, newStore storeFactory) {
 	opt := config.NewOptions([]config.Option{})
 	r := route.NewEngine(opt)
 	sessionNames := []string{"a", "b"}
-	r.Use(sessions.SessionsMany(sessionNames, newStore(t)))
+	r.Use(sessions.Many(sessionNames, newStore(t)))
 	r.GET("/set", func(ctx context.Context, c *app.RequestContext) {
 		sessionA := sessions.DefaultMany(c, "a")
 		sessionA.Set("hello", "world")
