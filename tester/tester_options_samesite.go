@@ -38,25 +38,42 @@
 * Modifications are Copyright 2022 CloudWeGo Authors.
 */
 
-package cookie
+package tester
 
 import (
-	gsessions "github.com/gorilla/sessions"
+	"context"
+	"net/http"
+	"strings"
+	"testing"
+
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/common/adaptor"
+	"github.com/cloudwego/hertz/pkg/common/ut"
+	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/cloudwego/hertz/pkg/route"
 	"github.com/hertz-contrib/sessions"
 )
 
-type Store interface {
-	sessions.Store
-}
+func testOptionSameSitego(t *testing.T, r *route.Engine) {
+	r.GET("/sameSite", func(ctx context.Context, c *app.RequestContext) {
+		session := sessions.Default(c)
+		session.Set("key", ok)
+		session.Options(sessions.Options{
+			SameSite: http.SameSiteStrictMode,
+		})
+		_ = session.Save()
+		c.String(200, ok)
+	})
 
-type store struct {
-	*gsessions.CookieStore
-}
+	w1 := ut.PerformRequest(r, consts.MethodGet, "/sameSite", nil)
+	res3 := w1.Result()
+	resp3 := adaptor.GetCompatResponseWriter(res3)
+	// res3 := httptest.NewRecorder()
+	// req3, _ := http.NewRequest("GET", "/sameSite", nil)
+	// r.ServeHTTP(res3, req3)
 
-func (c *store) Options(opts sessions.Options) {
-	c.CookieStore.Options = opts.ToGorillaOptions()
-}
-
-func NewStore(keyPairs ...[]byte) Store {
-	return &store{gsessions.NewCookieStore(keyPairs...)}
+	s := strings.Split(resp3.Header().Get("Set-Cookie"), ";")
+	if s[1] != " SameSite=Strict" {
+		t.Error("Error writing same site with options:", s[1])
+	}
 }
