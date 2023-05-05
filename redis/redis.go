@@ -28,7 +28,6 @@ package redis
 import (
 	"errors"
 
-	"github.com/boj/redistore"
 	"github.com/gomodule/redigo/redis"
 	"github.com/hertz-contrib/sessions"
 )
@@ -38,7 +37,7 @@ type Store interface {
 }
 
 type store struct {
-	*redistore.RediStore
+	*RediStore
 }
 
 func (s *store) Options(opts sessions.Options) {
@@ -46,7 +45,7 @@ func (s *store) Options(opts sessions.Options) {
 }
 
 func NewStore(size int, network, addr, passwd string, keyPairs ...[]byte) (Store, error) {
-	s, err := redistore.NewRediStore(size, network, addr, passwd, keyPairs...)
+	s, err := NewRediStore(size, network, addr, passwd, keyPairs...)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +57,7 @@ func NewStore(size int, network, addr, passwd string, keyPairs ...[]byte) (Store
 //
 // Ref: https://godoc.org/github.com/boj/redistore#NewRediStoreWithDB
 func NewStoreWithDB(size int, network, addr, passwd, DB string, keyPairs ...[]byte) (Store, error) {
-	s, err := redistore.NewRediStoreWithDB(size, network, addr, passwd, DB, keyPairs...)
+	s, err := NewRediStoreWithDB(size, network, addr, passwd, DB, keyPairs...)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +68,7 @@ func NewStoreWithDB(size int, network, addr, passwd, DB string, keyPairs ...[]by
 //
 // Ref: https://godoc.org/github.com/boj/redistore#NewRediStoreWithPool
 func NewStoreWithPool(pool *redis.Pool, keyPairs ...[]byte) (Store, error) {
-	s, err := redistore.NewRediStoreWithPool(pool, keyPairs...)
+	s, err := NewRediStoreWithPool(pool, keyPairs...)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +88,7 @@ func SetKeyPrefix(s Store, prefix string) error {
 
 // GetRedisStore get the actual working store.
 // Ref: https://godoc.org/github.com/boj/redistore#RediStore
-func GetRedisStore(s Store) (rediStore *redistore.RediStore, err error) {
+func GetRedisStore(s Store) (rediStore *RediStore, err error) {
 	realStore, ok := s.(*store)
 	if !ok {
 		err = errors.New("unable to get the redis store: Store isn't *store")
