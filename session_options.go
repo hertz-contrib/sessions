@@ -38,17 +38,38 @@
 * Modifications are Copyright 2022 CloudWeGo Authors.
 */
 
-//go:build !go1.11
-// +build !go1.11
-
-package tester
+package sessions
 
 import (
-	"testing"
+	"net/http"
 
-	"github.com/cloudwego/hertz/pkg/route"
+	gsessions "github.com/gorilla/sessions"
 )
 
-func testOptionSameSitego(t *testing.T, r *route.Engine) {
-	// not supported
+// Options stores configuration for a session or session store.
+// Fields are a subset of http.Cookie fields.
+type Options struct {
+	Path   string
+	Domain string
+	// MaxAge=0 means no 'Max-Age' attribute specified.
+	// MaxAge<0 means delete cookie now, equivalently 'Max-Age: 0'.
+	// MaxAge>0 means Max-Age attribute present and given in seconds.
+	MaxAge   int
+	Secure   bool
+	HttpOnly bool
+	// rfc-draft to preventing CSRF: https://tools.ietf.org/html/draft-west-first-party-cookies-07
+	//   refer: https://godoc.org/net/http
+	//          https://www.sjoerdlangkemper.nl/2016/04/14/preventing-csrf-with-samesite-cookie-attribute/
+	SameSite http.SameSite
+}
+
+func (o Options) ToGorillaOptions() *gsessions.Options {
+	return &gsessions.Options{
+		Path:     o.Path,
+		Domain:   o.Domain,
+		MaxAge:   o.MaxAge,
+		Secure:   o.Secure,
+		HttpOnly: o.HttpOnly,
+		SameSite: o.SameSite,
+	}
 }

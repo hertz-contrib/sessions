@@ -38,31 +38,42 @@
 * Modifications are Copyright 2022 CloudWeGo Authors.
 */
 
-//go:build !go1.11
-// +build !go1.11
+package tester
 
-package sessions
+import (
+	"context"
+	"net/http"
+	"strings"
+	"testing"
 
-import gsessions "github.com/gorilla/sessions"
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/common/adaptor"
+	"github.com/cloudwego/hertz/pkg/common/ut"
+	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/cloudwego/hertz/pkg/route"
+	"github.com/hertz-contrib/sessions"
+)
 
-// Options stores configuration for a session or session store.
-// Fields are a subset of http.Cookie fields.
-type Options struct {
-	Path   string
-	Domain string
-	// MaxAge=0 means no 'Max-Age' attribute specified.
-	// MaxAge<0 means delete cookie now, equivalently 'Max-Age: 0'.
-	// MaxAge>0 means Max-Age attribute present and given in seconds.
-	MaxAge   int
-	Secure   bool
-	HttpOnly bool
-}
+func testOptionSameSitego(t *testing.T, r *route.Engine) {
+	r.GET("/sameSite", func(ctx context.Context, c *app.RequestContext) {
+		session := sessions.Default(c)
+		session.Set("key", ok)
+		session.Options(sessions.Options{
+			SameSite: http.SameSiteStrictMode,
+		})
+		_ = session.Save()
+		c.String(200, ok)
+	})
 
-func (o Options) ToGorillaOptions() *gsessions.Options {
-	return &gsessions.Options{
-		Path:     o.Path,
-		Domain:   o.Domain,
-		MaxAge:   o.MaxAge,
-		HttpOnly: o.HttpOnly,
+	w1 := ut.PerformRequest(r, consts.MethodGet, "/sameSite", nil)
+	res3 := w1.Result()
+	resp3 := adaptor.GetCompatResponseWriter(res3)
+	// res3 := httptest.NewRecorder()
+	// req3, _ := http.NewRequest("GET", "/sameSite", nil)
+	// r.ServeHTTP(res3, req3)
+
+	s := strings.Split(resp3.Header().Get("Set-Cookie"), ";")
+	if s[1] != " SameSite=Strict" {
+		t.Error("Error writing same site with options:", s[1])
 	}
 }
