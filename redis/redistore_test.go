@@ -254,6 +254,16 @@ func TestRediStore(t *testing.T) {
 		if !ok || len(cookies) != 1 {
 			t.Fatalf("No cookies. Header: %s", hdr)
 		}
+
+		sID := session.ID
+		s, err := LoadSessionBySessionId(store, sID)
+		if err != nil {
+			t.Fatalf("LoadSessionBySessionId Error: %v", err)
+		}
+
+		if len(s.Values) == 0 {
+			t.Fatalf("No session value: %s", hdr)
+		}
 	}
 
 	// Round 4 ----------------------------------------------------------------
