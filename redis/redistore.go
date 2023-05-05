@@ -34,6 +34,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -57,8 +59,8 @@ func (s JSONSerializer) Serialize(ss *sessions.Session) ([]byte, error) {
 	for k, v := range ss.Values {
 		ks, ok := k.(string)
 		if !ok {
-			err := fmt.Errorf("Non-string key value, cannot serialize session to JSON: %v", k)
-			fmt.Printf("redistore.JSONSerializer.serialize() Error: %v", err)
+			err := fmt.Errorf("non-string key value, cannot serialize session to JSON: %v", k)
+			hlog.Errorf("redistore.JSONSerializer.serialize() Error: %v", err)
 			return nil, err
 		}
 		m[ks] = v
@@ -71,7 +73,7 @@ func (s JSONSerializer) Deserialize(d []byte, ss *sessions.Session) error {
 	m := make(map[string]interface{})
 	err := json.Unmarshal(d, &m)
 	if err != nil {
-		fmt.Printf("redistore.JSONSerializer.deserialize() Error: %v", err)
+		hlog.Errorf("redistore.JSONSerializer.deserialize() Error: %v", err)
 		return err
 	}
 	for k, v := range m {
@@ -152,7 +154,7 @@ func (s *RediStore) SetMaxAge(v int) {
 		if c, ok = s.Codecs[i].(*securecookie.SecureCookie); ok {
 			c.MaxAge(v)
 		} else {
-			fmt.Printf("Can't change MaxAge on codec %v\n", s.Codecs[i])
+			hlog.Warnf("Can't change MaxAge on codec %v\n", s.Codecs[i])
 		}
 	}
 }
@@ -378,4 +380,24 @@ func (s *RediStore) delete(session *sessions.Session) error {
 		return err
 	}
 	return nil
+}
+
+// LoadSessionBySessionId Get session using session_id even without a context
+func LoadSessionBySessionId(s *RediStore, sessionId string) (*sessions.Session, error) {
+	var session sessions.Session
+	session.ID = sessionId
+	exist, err := s.load(&session)
+	if err != nil {
+		return nil, err
+	}
+	if !exist {
+		return nil, nil
+	}
+	return &session, nil
+}
+
+// SaveSessionWithoutContext Save session even without a context
+func SaveSessionWithoutContext(s *RediStore, sessionId string, session *sessions.Session) error {
+	session.ID = sessionId
+	return s.save(session)
 }

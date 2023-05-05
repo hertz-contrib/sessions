@@ -62,10 +62,6 @@ func NewRecorder() *ResponseRecorder {
 	}
 }
 
-// DefaultRemoteAddr is the default remote address to return in RemoteAddr if
-// an explicit DefaultRemoteAddr isn't set on ResponseRecorder.
-const DefaultRemoteAddr = "1.2.3.4"
-
 // Header returns the response headers.
 func (rw *ResponseRecorder) Header() http.Header {
 	return rw.HeaderMap
@@ -314,6 +310,9 @@ func TestRediStore(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		session, err = store.New(req, "my session")
+		if err != nil {
+			t.Fatal("failed to New store", err)
+		}
 		session.Values["big"] = make([]byte, base64.StdEncoding.DecodedLen(4096*2))
 		err = session.Save(req, w)
 		if err == nil {
