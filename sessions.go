@@ -53,12 +53,13 @@ import (
 
 const (
 	DefaultKey  = "github.com/hertz-contrib/sessions"
-	errorFormat = "[sessions] ERROR! %s\n"
+	errorFormat = "[sessions] ERROR! %s"
 )
 
 type Store interface {
 	sessions.Store
 	Options(Options)
+	MaxAge() int
 }
 
 // Session Wraps thinly gorilla-session methods.
@@ -122,6 +123,21 @@ func Many(names []string, store Store) app.HandlerFunc {
 		defer context.Clear(req)
 		c.Next(ctx)
 		resp.WriteHeader(c.Response.StatusCode())
+	}
+}
+
+// Refresh returns a middleware that force a session to be saved when the handler returns.
+func Refresh(store Store) app.HandlerFunc {
+	return func(ctx gcontext.Context, c *app.RequestContext) {
+		s := Default(c)
+		s.Options(Options{
+			MaxAge: store.MaxAge(),
+		})
+		err := s.Save()
+		if err != nil {
+			hlog.Errorf(errorFormat, err)
+		}
+		c.Next(ctx)
 	}
 }
 

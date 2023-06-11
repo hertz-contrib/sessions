@@ -55,6 +55,10 @@ type store struct {
 	*RediStore
 }
 
+func (s *store) MaxAge() int {
+	return s.RediStore.Options.MaxAge
+}
+
 func (s *store) Options(opts sessions.Options) {
 	s.RediStore.Options = opts.ToGorillaOptions()
 }

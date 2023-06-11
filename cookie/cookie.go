@@ -57,6 +57,11 @@ func (c *store) Options(opts sessions.Options) {
 	c.CookieStore.Options = opts.ToGorillaOptions()
 }
 
+// MaxAge returns the MaxAge in seconds of a session cookie.
+func (c *store) MaxAge() int {
+	return c.CookieStore.Options.MaxAge
+}
+
 func NewStore(keyPairs ...[]byte) Store {
 	return &store{gsessions.NewCookieStore(keyPairs...)}
 }
