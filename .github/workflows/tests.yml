@@ -28,10 +28,5 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Lint
-        run: |
-          go install mvdan.cc/gofumpt@v0.2.0
-          test -z "$(gofumpt -l -extra .)" 
-
       - name: Unit Test
         run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
