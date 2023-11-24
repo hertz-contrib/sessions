@@ -76,7 +76,7 @@ func (s *Store) Options(options hs.Options) {
 	s.Opts = options.ToGorillaOptions()
 }
 
-// NewStoreWithOption returns a new rediscluster.Store by setting redisc.Cluster
+// NewStoreWithOption returns a new rediscluster.Store by setting *redis.ClusterOptions
 func NewStoreWithOption(opt *redis.ClusterOptions, kvs ...[]byte) (*Store, error) {
 	rs := &Store{
 		Rdb:    redis.NewClusterClient(opt),

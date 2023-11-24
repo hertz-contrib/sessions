@@ -185,6 +185,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/utils"
@@ -194,7 +195,7 @@ import (
 
 func main() {
 	h := server.Default(server.WithHostPorts(":8000"))
-	store, _ := rediscluster.NewStore(10, "tcp", []string{"localhost:5001", "localhost:5002"}, "", []byte("secret"))
+	store, _ := rediscluster.NewStore(10, []string{"localhost:5001", "localhost:5002"}, "", nil, []byte("secret"))
 	h.Use(sessions.New("mysession", store))
 
 	h.GET("/incr", func(ctx context.Context, c *app.RequestContext) {
@@ -213,7 +214,6 @@ func main() {
 	})
 	h.Spin()
 }
-
 ```
 
 ## 许可证
