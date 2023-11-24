@@ -50,6 +50,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/gob"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -361,11 +362,15 @@ func TestNewRedisCluster(t *testing.T) {
 
 func TestPingGoodPort(t *testing.T) {
 	store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
-	defer store.Close()
-	ok, err := store.ping()
 	if err != nil {
 		t.Error(err.Error())
 	}
+	defer func() {
+		err := store.Close()
+		hlog.Error(err.Error())
+	}()
+	ok, err := store.ping()
+
 	if !ok {
 		t.Error("Expected server to PONG")
 	}
