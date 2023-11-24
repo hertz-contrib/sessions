@@ -50,7 +50,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/gob"
-	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -365,12 +364,11 @@ func TestPingGoodPort(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
-	defer func() {
-		err := store.Close()
-		hlog.Error(err.Error())
-	}()
+	defer store.Close()
 	ok, err := store.ping()
-
+	if err != nil {
+		t.Error(err.Error())
+	}
 	if !ok {
 		t.Error("Expected server to PONG")
 	}
