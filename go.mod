@@ -8,6 +8,5 @@ require (
 	github.com/gorilla/context v1.1.2
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/sessions v1.2.2
-	github.com/mna/redisc v1.4.0
-	github.com/redis/go-redis/v9 v9.3.0 // indirect
+	github.com/redis/go-redis/v9 v9.3.0
 )
