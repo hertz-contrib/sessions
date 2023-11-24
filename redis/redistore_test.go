@@ -50,10 +50,11 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/gob"
-	hs "github.com/hertz-contrib/sessions"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	hs "github.com/hertz-contrib/sessions"
 
 	"github.com/gorilla/sessions"
 )

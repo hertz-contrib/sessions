@@ -165,7 +165,6 @@ func TestNewRedisCluster(t *testing.T) {
 
 	{
 		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
-
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -213,7 +212,6 @@ func TestNewRedisCluster(t *testing.T) {
 
 	{
 		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
-
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -254,7 +252,6 @@ func TestNewRedisCluster(t *testing.T) {
 
 	{
 		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
-
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -288,7 +285,6 @@ func TestNewRedisCluster(t *testing.T) {
 
 	{
 		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
-
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -319,7 +315,6 @@ func TestNewRedisCluster(t *testing.T) {
 
 	{
 		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
-
 		if err != nil {
 			t.Fatal(err.Error())
 		}

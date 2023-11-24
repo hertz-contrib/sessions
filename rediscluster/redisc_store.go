@@ -50,7 +50,6 @@ import (
 	"context"
 	"encoding/base32"
 	"errors"
-	gredis "github.com/redis/go-redis/v9"
 	"net/http"
 	"strings"
 	"time"
@@ -58,12 +57,13 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	hs "github.com/hertz-contrib/sessions"
+	"github.com/redis/go-redis/v9"
 )
 
 var sessionExpire = 86400 * 30
 
 type Store struct {
-	Rdb           *gredis.ClusterClient
+	Rdb           *redis.ClusterClient
 	Codecs        []securecookie.Codec
 	Opts          *sessions.Options // default configuration
 	DefaultMaxAge int               // default Redis TTL for a MaxAge == 0 session
@@ -77,9 +77,9 @@ func (s *Store) Options(options hs.Options) {
 }
 
 // NewStoreWithOption returns a new rediscluster.Store by setting redisc.Cluster
-func NewStoreWithOption(opt *gredis.ClusterOptions, kvs ...[]byte) (*Store, error) {
+func NewStoreWithOption(opt *redis.ClusterOptions, kvs ...[]byte) (*Store, error) {
 	rs := &Store{
-		Rdb:    gredis.NewClusterClient(opt),
+		Rdb:    redis.NewClusterClient(opt),
 		Codecs: securecookie.CodecsFromPairs(kvs...),
 		Opts: &sessions.Options{
 			Path:   "/",
@@ -90,14 +90,14 @@ func NewStoreWithOption(opt *gredis.ClusterOptions, kvs ...[]byte) (*Store, erro
 		keyPrefix:     "session_",
 		serializer:    hs.GobSerializer{},
 	}
-	err := rs.Rdb.ForEachShard(context.Background(), func(ctx context.Context, shard *gredis.Client) error {
+	err := rs.Rdb.ForEachShard(context.Background(), func(ctx context.Context, shard *redis.Client) error {
 		return shard.Ping(ctx).Err()
 	})
 	return rs, err
 }
 
 // NewStore returns a new rediscluster.Store
-func NewStore(maxIdle int, addrs []string, password string, newClient func(opt *gredis.Options) *gredis.Client, kvs ...[]byte) (*Store, error) {
+func NewStore(maxIdle int, addrs []string, password string, newClient func(opt *redis.Options) *redis.Client, kvs ...[]byte) (*Store, error) {
 	return NewStoreWithOption(newOption(addrs, password, maxIdle, newClient), kvs...)
 }
 
@@ -241,9 +241,9 @@ func newOption(
 	addrs []string,
 	password string,
 	maxIdleConns int,
-	newClient func(opt *gredis.Options) *gredis.Client,
-) *gredis.ClusterOptions {
-	return &gredis.ClusterOptions{
+	newClient func(opt *redis.Options) *redis.Client,
+) *redis.ClusterOptions {
+	return &redis.ClusterOptions{
 		Addrs:        addrs,
 		NewClient:    newClient,
 		Password:     password,
