@@ -47,12 +47,8 @@
 package redis
 
 import (
-	"bytes"
 	"encoding/base32"
-	"encoding/gob"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -62,68 +58,11 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
+	hs "github.com/hertz-contrib/sessions"
 )
 
 // Amount of time for cookies/redis keys to expire.
 var sessionExpire = 86400 * 30
-
-// SessionSerializer provides an interface hook for alternative serializers
-type SessionSerializer interface {
-	Deserialize(d []byte, ss *sessions.Session) error
-	Serialize(ss *sessions.Session) ([]byte, error)
-}
-
-// JSONSerializer encode the session map to JSON.
-type JSONSerializer struct{}
-
-// Serialize to JSON. Will err if there are unmarshalable key values
-func (s JSONSerializer) Serialize(ss *sessions.Session) ([]byte, error) {
-	m := make(map[string]interface{}, len(ss.Values))
-	for k, v := range ss.Values {
-		ks, ok := k.(string)
-		if !ok {
-			err := fmt.Errorf("non-string key value, cannot serialize session to JSON: %v", k)
-			hlog.Errorf("redistore.JSONSerializer.serialize() Error: %v", err)
-			return nil, err
-		}
-		m[ks] = v
-	}
-	return json.Marshal(m)
-}
-
-// Deserialize back to map[string]interface{}
-func (s JSONSerializer) Deserialize(d []byte, ss *sessions.Session) error {
-	m := make(map[string]interface{})
-	err := json.Unmarshal(d, &m)
-	if err != nil {
-		hlog.Errorf("redistore.JSONSerializer.deserialize() Error: %v", err)
-		return err
-	}
-	for k, v := range m {
-		ss.Values[k] = v
-	}
-	return nil
-}
-
-// GobSerializer uses gob package to encode the session map
-type GobSerializer struct{}
-
-// Serialize using gob
-func (s GobSerializer) Serialize(ss *sessions.Session) ([]byte, error) {
-	buf := new(bytes.Buffer)
-	enc := gob.NewEncoder(buf)
-	err := enc.Encode(ss.Values)
-	if err == nil {
-		return buf.Bytes(), nil
-	}
-	return nil, err
-}
-
-// Deserialize back to map[interface{}]interface{}
-func (s GobSerializer) Deserialize(d []byte, ss *sessions.Session) error {
-	dec := gob.NewDecoder(bytes.NewBuffer(d))
-	return dec.Decode(&ss.Values)
-}
 
 // RediStore stores sessions in a redis backend.
 type RediStore struct {
@@ -133,7 +72,7 @@ type RediStore struct {
 	DefaultMaxAge int               // default Redis TTL for a MaxAge == 0 session
 	maxLength     int
 	keyPrefix     string
-	serializer    SessionSerializer
+	serializer    hs.Serializer
 }
 
 // SetMaxLength sets RediStore.maxLength if the `l` argument is greater or equal 0
@@ -154,7 +93,7 @@ func (s *RediStore) SetKeyPrefix(p string) {
 }
 
 // SetSerializer sets the serializer
-func (s *RediStore) SetSerializer(ss SessionSerializer) {
+func (s *RediStore) SetSerializer(ss hs.Serializer) {
 	s.serializer = ss
 }
 
@@ -253,7 +192,7 @@ func NewRediStoreWithPool(pool *redis.Pool, keyPairs ...[]byte) (*RediStore, err
 		DefaultMaxAge: 60 * 20, // 20 minutes seems like a reasonable default
 		maxLength:     4096,
 		keyPrefix:     "session_",
-		serializer:    GobSerializer{},
+		serializer:    hs.GobSerializer{},
 	}
 	_, err := rs.ping()
 	return rs, err

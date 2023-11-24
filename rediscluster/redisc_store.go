@@ -47,42 +47,40 @@
 package rediscluster
 
 import (
+	"context"
 	"encoding/base32"
 	"errors"
+	gredis "github.com/redis/go-redis/v9"
 	"net/http"
 	"strings"
 	"time"
 
-	hs "github.com/hertz-contrib/sessions"
-
-	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
-	rredis "github.com/hertz-contrib/sessions/redis"
-	"github.com/mna/redisc"
+	hs "github.com/hertz-contrib/sessions"
 )
 
 var sessionExpire = 86400 * 30
 
 type Store struct {
-	Cluster       *redisc.Cluster
+	Rdb           *gredis.ClusterClient
 	Codecs        []securecookie.Codec
 	Opts          *sessions.Options // default configuration
 	DefaultMaxAge int               // default Redis TTL for a MaxAge == 0 session
 	maxLength     int
 	keyPrefix     string
-	serializer    rredis.SessionSerializer
+	serializer    hs.Serializer
 }
 
 func (s *Store) Options(options hs.Options) {
 	s.Opts = options.ToGorillaOptions()
 }
 
-// NewStoreWithCluster returns a new rediscluster.Store by setting redisc.Cluster
-func NewStoreWithCluster(cluster *redisc.Cluster, kvs ...[]byte) (*Store, error) {
+// NewStoreWithOption returns a new rediscluster.Store by setting redisc.Cluster
+func NewStoreWithOption(opt *gredis.ClusterOptions, kvs ...[]byte) (*Store, error) {
 	rs := &Store{
-		Cluster: cluster,
-		Codecs:  securecookie.CodecsFromPairs(kvs...),
+		Rdb:    gredis.NewClusterClient(opt),
+		Codecs: securecookie.CodecsFromPairs(kvs...),
 		Opts: &sessions.Options{
 			Path:   "/",
 			MaxAge: sessionExpire,
@@ -90,16 +88,17 @@ func NewStoreWithCluster(cluster *redisc.Cluster, kvs ...[]byte) (*Store, error)
 		DefaultMaxAge: 60 * 20, // 20 minutes seems like a reasonable default
 		maxLength:     4096,
 		keyPrefix:     "session_",
-		serializer:    rredis.GobSerializer{},
+		serializer:    hs.GobSerializer{},
 	}
-
-	err := cluster.Refresh()
+	err := rs.Rdb.ForEachShard(context.Background(), func(ctx context.Context, shard *gredis.Client) error {
+		return shard.Ping(ctx).Err()
+	})
 	return rs, err
 }
 
 // NewStore returns a new rediscluster.Store
-func NewStore(maxIdle int, network string, startupNodes []string, password string, kvs ...[]byte) (*Store, error) {
-	return NewStoreWithCluster(newCluster(startupNodes, CreateDefaultPool(maxIdle, network, password)), kvs...)
+func NewStore(maxIdle int, addrs []string, password string, newClient func(opt *gredis.Options) *gredis.Client, kvs ...[]byte) (*Store, error) {
+	return NewStoreWithOption(newOption(addrs, password, maxIdle, newClient), kvs...)
 }
 
 func (s *Store) Get(r *http.Request, name string) (*sessions.Session, error) {
@@ -151,7 +150,7 @@ func (s *Store) Save(r *http.Request, w http.ResponseWriter, session *sessions.S
 }
 
 func (s *Store) Close() error {
-	return s.Cluster.Close()
+	return s.Rdb.Close()
 }
 
 // SetMaxLength sets RedisClusterStore.maxLength if the `l` argument is greater or equal 0
@@ -172,24 +171,16 @@ func (s *Store) SetKeyPrefix(p string) {
 }
 
 // SetSerializer sets the serializer
-func (s *Store) SetSerializer(ss rredis.SessionSerializer) {
+func (s *Store) SetSerializer(ss hs.Serializer) {
 	s.serializer = ss
 }
 
 func (s *Store) load(session *sessions.Session) (bool, error) {
-	conn := s.Cluster.Get()
-	defer conn.Close()
-	if err := conn.Err(); err != nil {
-		return false, err
+	res := s.Rdb.Get(context.Background(), s.keyPrefix+session.ID)
+	if res == nil {
+		return false, nil
 	}
-	data, err := conn.Do("GET", s.keyPrefix+session.ID)
-	if err != nil {
-		return false, err
-	}
-	if data == nil {
-		return false, nil // no data was associated with this key
-	}
-	b, err := redis.Bytes(data, err)
+	b, err := res.Bytes()
 	if err != nil {
 		return false, err
 	}
@@ -205,36 +196,25 @@ func (s *Store) save(session *sessions.Session) error {
 	if s.maxLength != 0 && len(b) > s.maxLength {
 		return errors.New("SessionStore: the value to store is too big")
 	}
-	conn := s.Cluster.Get()
-	defer conn.Close()
-	if err = conn.Err(); err != nil {
-		return err
-	}
 	age := session.Options.MaxAge
 	if age == 0 {
 		age = s.DefaultMaxAge
 	}
-	_, err = conn.Do("SETEX", s.keyPrefix+session.ID, age, b)
+	err = s.Rdb.SetEx(context.Background(), s.keyPrefix+session.ID, b, time.Duration(age)*time.Second).Err()
 	return err
 }
 
 func (s *Store) ping() (bool, error) {
-	conn := s.Cluster.Get()
-	defer conn.Close()
-	data, err := conn.Do("PING")
-	if err != nil || data == nil {
+	res := s.Rdb.Ping(context.Background())
+	if result, err := res.Result(); result != "PONG" || err != nil {
 		return false, err
 	}
-	return data == "PONG", nil
+	return true, nil
 }
 
 func (s *Store) delete(session *sessions.Session) error {
-	conn := s.Cluster.Get()
-	defer conn.Close()
-	if _, err := conn.Do("DEL", s.keyPrefix+session.ID); err != nil {
-		return err
-	}
-	return nil
+	del := s.Rdb.Del(context.Background(), s.keyPrefix+session.ID)
+	return del.Err()
 }
 
 // LoadSessionBySessionId Get session using session_id even without a context
@@ -257,54 +237,16 @@ func SaveSessionWithoutContext(s *Store, sessionId string, session *sessions.Ses
 	return s.save(session)
 }
 
-// CreateDefaultPool return a function is used to set redisc.Cluster CreatePool by default
-func CreateDefaultPool(maxIdle int, network string, password ...string) func(address string, options ...redis.DialOption) (*redis.Pool, error) {
-	return func(address string, options ...redis.DialOption) (*redis.Pool, error) {
-		var pwd string
-		if len(password) > 0 {
-			pwd = password[0]
-		}
-		pool := &redis.Pool{
-			MaxIdle:     maxIdle,
-			IdleTimeout: 240 * time.Second,
-			TestOnBorrow: func(c redis.Conn, t time.Time) error {
-				_, err := c.Do("PING")
-				return err
-			},
-			Dial: func() (redis.Conn, error) {
-				return dial(network, address, pwd)
-			},
-		}
-		conn := pool.Get()
-		defer conn.Close()
-		data, err := conn.Do("PING")
-		if err != nil || data == nil {
-			return nil, err
-		}
-		return pool, nil
+func newOption(
+	addrs []string,
+	password string,
+	maxIdleConns int,
+	newClient func(opt *gredis.Options) *gredis.Client,
+) *gredis.ClusterOptions {
+	return &gredis.ClusterOptions{
+		Addrs:        addrs,
+		NewClient:    newClient,
+		Password:     password,
+		MaxIdleConns: maxIdleConns,
 	}
-}
-
-func newCluster(
-	startupNodes []string,
-	createPoolFunc func(address string, options ...redis.DialOption) (*redis.Pool, error),
-) *redisc.Cluster {
-	return &redisc.Cluster{
-		StartupNodes: startupNodes,
-		CreatePool:   createPoolFunc,
-	}
-}
-
-func dial(network, address, password string) (redis.Conn, error) {
-	c, err := redis.Dial(network, address)
-	if err != nil {
-		return nil, err
-	}
-	if password != "" {
-		if _, err := c.Do("AUTH", password); err != nil {
-			c.Close()
-			return nil, err
-		}
-	}
-	return c, err
 }

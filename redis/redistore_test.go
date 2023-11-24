@@ -50,6 +50,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/gob"
+	hs "github.com/hertz-contrib/sessions"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -415,7 +416,7 @@ func TestRediStore(t *testing.T) {
 	{
 		addr := setup()
 		store, err := NewRediStore(10, "tcp", addr, "", []byte("secret-key"))
-		store.SetSerializer(JSONSerializer{})
+		store.SetSerializer(hs.JSONSerializer{})
 		if err != nil {
 			t.Fatal(err.Error())
 		}

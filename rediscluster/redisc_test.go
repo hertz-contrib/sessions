@@ -131,7 +131,7 @@ func TestNewRedisCluster(t *testing.T) {
 	)
 
 	{
-		store, err := NewStore(10, "tcp", []string{"localhost:5000", "localhost:5001"}, "", []byte("secret-key"))
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
 
 		assert.Nil(t, err)
 		defer store.Close()
@@ -164,7 +164,8 @@ func TestNewRedisCluster(t *testing.T) {
 	}
 
 	{
-		store, err := NewStore(10, "tcp", []string{"localhost:5000", "localhost:5001"}, "", []byte("secret-key"))
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
+
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -211,7 +212,8 @@ func TestNewRedisCluster(t *testing.T) {
 	}
 
 	{
-		store, err := NewStore(10, "tcp", []string{"localhost:5000", "localhost:5001"}, "", []byte("secret-key"))
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
+
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -251,7 +253,8 @@ func TestNewRedisCluster(t *testing.T) {
 	}
 
 	{
-		store, err := NewStore(10, "tcp", []string{"localhost:5000", "localhost:5001"}, "", []byte("secret-key"))
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
+
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -284,7 +287,8 @@ func TestNewRedisCluster(t *testing.T) {
 	}
 
 	{
-		store, err := NewStore(10, "tcp", []string{"localhost:5000", "localhost:5001"}, "", []byte("secret-key"))
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
+
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -314,7 +318,8 @@ func TestNewRedisCluster(t *testing.T) {
 	}
 
 	{
-		store, err := NewStore(10, "tcp", []string{"localhost:5000", "localhost:5001"}, "", []byte("secret-key"))
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
+
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -360,7 +365,7 @@ func TestNewRedisCluster(t *testing.T) {
 }
 
 func TestPingGoodPort(t *testing.T) {
-	store, _ := NewStore(10, "tcp", []string{"localhost:5000", "localhost:5001"}, "", []byte("secret-key"))
+	store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
 	defer store.Close()
 	ok, err := store.ping()
 	if err != nil {
