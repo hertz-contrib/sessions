@@ -14,6 +14,17 @@ jobs:
         with:
           redis-version: 4
 
+      - name: Start redis cluster
+        uses: vishnudxb/redis-cluster@1.0.9
+        with:
+          master1-port: 5000
+          master2-port: 5001
+          master3-port: 5002
+          slave1-port: 5003
+          slave2-port: 5004
+          slave3-port: 5005
+          sleep-duration: 5
+
       - uses: actions/checkout@v3
 
       - name: Set up Go
@@ -28,11 +39,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Unit Test
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+
       - name: Lint
         run: |
           go vet -stdmethods=false $(go list ./...)
           go install mvdan.cc/gofumpt@v0.2.0
-          test -z "$(gofumpt -l -extra .)" 
-
-      - name: Unit Test
-        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+          test -z "$(gofumpt -l -extra .)"

@@ -44,7 +44,7 @@
 * Modifications are Copyright 2022 CloudWeGo Authors.
 */
 
-package redis
+package rediscluster
 
 import (
 	"bytes"
@@ -54,13 +54,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	hs "github.com/hertz-contrib/sessions"
-
+	"github.com/cloudwego/hertz/pkg/common/test/assert"
 	"github.com/gorilla/sessions"
 )
 
-func setup() string {
-	return redisTestServer
+func init() {
+	gob.Register(FlashMessage{})
 }
 
 // ----------------------------------------------------------------------------
@@ -120,7 +119,7 @@ type FlashMessage struct {
 	Message string
 }
 
-func TestRediStore(t *testing.T) {
+func TestNewRedisCluster(t *testing.T) {
 	var (
 		req     *http.Request
 		rsp     *ResponseRecorder
@@ -131,21 +130,13 @@ func TestRediStore(t *testing.T) {
 		flashes []interface{}
 	)
 
-	// Copyright 2012 The Gorilla Authors. All rights reserved.
-	// Use of this source code is governed by a BSD-style
-	// license that can be found in the LICENSE file.
-
-	// Round 1 ----------------------------------------------------------------
 	{
-		// RedisStore
-		addr := setup()
-		store, err := NewRediStore(10, "tcp", addr, "", []byte("secret-key"))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
+
+		assert.Nil(t, err)
 		defer store.Close()
 
-		req, _ := http.NewRequest("GET", "http://localhost:8080/", nil)
+		req, _ = http.NewRequest("GET", "http://localhost:8080/", nil)
 		rsp = NewRecorder()
 		// Get a session.
 		if session, err = store.Get(req, "session-key"); err != nil {
@@ -172,11 +163,8 @@ func TestRediStore(t *testing.T) {
 		}
 	}
 
-	// Round 2 ----------------------------------------------------------------
 	{
-
-		addr := setup()
-		store, err := NewRediStore(10, "tcp", addr, "", []byte("secret-key"))
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -222,18 +210,12 @@ func TestRediStore(t *testing.T) {
 		}
 	}
 
-	// Round 3 ----------------------------------------------------------------
-	// Custom type
-
-	// RedisStore
 	{
-		addr := setup()
-		store, err := NewRediStore(10, "tcp", addr, "", []byte("secret-key"))
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
 		if err != nil {
 			t.Fatal(err.Error())
 		}
 		defer store.Close()
-
 		req, _ = http.NewRequest("GET", "http://localhost:8080/", nil)
 		rsp = NewRecorder()
 		// Get a session.
@@ -268,11 +250,8 @@ func TestRediStore(t *testing.T) {
 		}
 	}
 
-	// Round 4 ----------------------------------------------------------------
-	// Custom type
 	{
-		addr := setup()
-		store, err := NewRediStore(10, "tcp", addr, "", []byte("secret-key"))
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -304,40 +283,13 @@ func TestRediStore(t *testing.T) {
 		}
 	}
 
-	// Round 5 ----------------------------------------------------------------
-	// RediStore Delete session (deprecated)
-
-	//req, _ = http.NewRequest("GET", "http://localhost:8080/", nil)
-	//req.Header.Add("Cookie", cookies[0])
-	//rsp = NewRecorder()
-	//// Get a session.
-	//if session, err = store.Get(req, "session-key"); err != nil {
-	//	t.Fatalf("Error getting session: %v", err)
-	//}
-	//// Delete session.
-	//if err = store.Delete(req, rsp, session); err != nil {
-	//	t.Fatalf("Error deleting session: %v", err)
-	//}
-	//// Get a flash.
-	//flashes = session.Flashes()
-	//if len(flashes) != 0 {
-	//	t.Errorf("Expected empty flashes; Got %v", flashes)
-	//}
-	//hdr = rsp.Header()
-	//cookies, ok = hdr["Set-Cookie"]
-	//if !ok || len(cookies) != 1 {
-	//	t.Fatalf("No cookies. Header:", hdr)
-	//}
-
-	// Round 6 ----------------------------------------------------------------
-	// RediStore change MaxLength of session
-
 	{
-		addr := setup()
-		store, err := NewRediStore(10, "tcp", addr, "", []byte("secret-key"))
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
 		if err != nil {
 			t.Fatal(err.Error())
 		}
+		defer store.Close()
+
 		req, err = http.NewRequest("GET", "http://www.example.com", nil)
 		if err != nil {
 			t.Fatal("failed to create request", err)
@@ -361,63 +313,8 @@ func TestRediStore(t *testing.T) {
 		}
 	}
 
-	// Round 7 ----------------------------------------------------------------
-
-	// RedisStoreWithDB
 	{
-		addr := setup()
-		store, err := NewRediStoreWithDB(10, "tcp", addr, "", "1", []byte("secret-key"))
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		defer store.Close()
-
-		req, _ = http.NewRequest("GET", "http://localhost:8080/", nil)
-		rsp = NewRecorder()
-		// Get a session. Using the same key as previously, but on different DB
-		if session, err = store.Get(req, "session-key"); err != nil {
-			t.Fatalf("Error getting session: %v", err)
-		}
-		// Get a flash.
-		flashes = session.Flashes()
-		if len(flashes) != 0 {
-			t.Errorf("Expected empty flashes; Got %v", flashes)
-		}
-		// Add some flashes.
-		session.AddFlash("foo")
-		// Save.
-		if err = sessions.Save(req, rsp); err != nil {
-			t.Fatalf("Error saving session: %v", err)
-		}
-		hdr = rsp.Header()
-		cookies, ok = hdr["Set-Cookie"]
-		if !ok || len(cookies) != 1 {
-			t.Fatalf("No cookies. Header: %s", hdr)
-		}
-
-		// Get a session.
-		req.Header.Add("Cookie", cookies[0])
-		if session, err = store.Get(req, "session-key"); err != nil {
-			t.Fatalf("Error getting session: %v", err)
-		}
-		// Check all saved values.
-		flashes = session.Flashes()
-		if len(flashes) != 1 {
-			t.Fatalf("Expected flashes; Got %v", flashes)
-		}
-		if flashes[0] != "foo" {
-			t.Errorf("Expected foo,bar; Got %v", flashes)
-		}
-	}
-
-	// Round 8 ----------------------------------------------------------------
-	// JSONSerializer
-
-	// RedisStore
-	{
-		addr := setup()
-		store, err := NewRediStore(10, "tcp", addr, "", []byte("secret-key"))
-		store.SetSerializer(hs.JSONSerializer{})
+		store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -463,7 +360,10 @@ func TestRediStore(t *testing.T) {
 }
 
 func TestPingGoodPort(t *testing.T) {
-	store, _ := NewRediStore(10, "tcp", ":6379", "", []byte("secret-key"))
+	store, err := NewStore(10, []string{"localhost:5000", "localhost:5001"}, "", nil, []byte("secret-key"))
+	if err != nil {
+		t.Error(err.Error())
+	}
 	defer store.Close()
 	ok, err := store.ping()
 	if err != nil {
@@ -472,26 +372,4 @@ func TestPingGoodPort(t *testing.T) {
 	if !ok {
 		t.Error("Expected server to PONG")
 	}
-}
-
-func TestPingBadPort(t *testing.T) {
-	store, _ := NewRediStore(10, "tcp", ":6378", "", []byte("secret-key"))
-	defer store.Close()
-	_, err := store.ping()
-	if err == nil {
-		t.Error("Expected error")
-	}
-}
-
-func ExampleRediStore() {
-	// RedisStore
-	store, err := NewRediStore(10, "tcp", ":6379", "", []byte("secret-key"))
-	if err != nil {
-		panic(err)
-	}
-	defer store.Close()
-}
-
-func init() {
-	gob.Register(FlashMessage{})
 }
